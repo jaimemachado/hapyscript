@@ -93,3 +93,6 @@ This repository is provided as-is for personal use. Feel free to use and modify 
 
 - [Pyscript GitHub](https://github.com/custom-components/pyscript)
 - [Home Assistant Community Forum - Pyscript](https://community.home-assistant.io/c/third-party/pyscript/)
+
+
+https://github.com/LFTPadilla/pyscript-homeassitant/
