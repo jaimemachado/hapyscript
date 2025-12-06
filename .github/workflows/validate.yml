@@ -1,0 +1,77 @@
+name: Validate PyScripts
+
+on:
+  pull_request:
+    branches:
+      - main
+      - master
+    paths:
+      - '**.py'
+      - '.github/workflows/validate.yml'
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - '**.py'
+      - '.github/workflows/validate.yml'
+
+jobs:
+  validate-python:
+    name: Validate Python Scripts
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8 pylint black isort
+      
+      - name: Check Python syntax
+        run: |
+          # Check for syntax errors and undefined names
+          find . -name "*.py" -not -path "./.git/*" -not -path "./__pycache__/*" | xargs python -m py_compile
+      
+      - name: Run flake8
+        run: |
+          # Run flake8 for style guide enforcement
+          # E501: line too long (we'll be lenient)
+          # W503: line break before binary operator (conflicts with Black)
+          # F821: undefined name (pyscript provides these at runtime)
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --extend-ignore=F821 || echo "⚠️  Some undefined names detected (may be provided by pyscript runtime)"
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=120 --ignore=E501,W503,F821 --statistics
+        continue-on-error: true
+      
+      - name: Check code formatting with Black
+        run: |
+          # Check if code follows Black formatting
+          black --check --diff --line-length=120 .
+        continue-on-error: true
+      
+      - name: Check import sorting with isort
+        run: |
+          # Check if imports are properly sorted
+          isort --check-only --diff --profile black --line-length=120 .
+        continue-on-error: true
+      
+      - name: Run pylint
+        run: |
+          # Run pylint for additional code quality checks
+          # Disable some checks that may not apply to Home Assistant scripts
+          find . -name "*.py" -not -path "./.git/*" -not -path "./__pycache__/*" | xargs pylint --disable=C0114,C0115,C0116,R0903,W0611,C0103 --max-line-length=120 || true
+        continue-on-error: true
+      
+      - name: Summary
+        run: |
+          echo "✅ Python syntax validation completed"
+          echo "📝 Style checks completed (warnings are informational)"
