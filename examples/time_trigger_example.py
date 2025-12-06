@@ -45,6 +45,6 @@ def evening_routine():
 
 
 # Alternative time trigger formats:
-# @time_trigger("once(2024-12-31 23:59:59)")  # Run once at specific datetime
+# @time_trigger("once(2025-12-31 23:59:59)")  # Run once at specific datetime
 # @time_trigger("period(now, 1h)")            # Run every hour
 # @time_trigger("cron(*/15 * * * *)")         # Run every 15 minutes
