@@ -2,3 +2,6 @@ allow_all_imports: true
 hass_is_global: true
 apps:
   hello:
+  # test
+  main:
+  #test
