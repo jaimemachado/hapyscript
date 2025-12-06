@@ -68,6 +68,16 @@ This is a personal repository for my Home Assistant setup, but feel free to:
 - Open issues if you find bugs
 - Suggest improvements
 
+### Pull Requests
+
+All pull requests are automatically validated using GitHub Actions. The CI pipeline checks:
+- Python syntax
+- Code style (flake8)
+- Formatting (Black)
+- Import organization (isort)
+
+See [.github/VALIDATION.md](.github/VALIDATION.md) for details on running validation locally.
+
 ## License
 
 This repository is provided as-is for personal use. Feel free to use and modify the scripts for your own Home Assistant instance.
