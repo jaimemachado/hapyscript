@@ -97,3 +97,4 @@ This repository is provided as-is for personal use. Feel free to use and modify 
 
 https://github.com/LFTPadilla/pyscript-homeassitant/
 https://github.com/Robert1991/home_assistant_pyscript/
+https://github.com/stevius10/HAConfig-as-PyCode/blob/develop/pyscript/apps/scrape_housing/housing.py
