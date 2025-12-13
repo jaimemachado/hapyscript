@@ -26,7 +26,7 @@ pkgs.mkShell {
   buildInputs = [
     # C++ development tools
     pkgs.gcc       # GNU Compiler Collection
-
+    pkgs.nodejs
     python
   ];
 
