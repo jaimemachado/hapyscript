@@ -1,4 +1,4 @@
-{ pkgs ? import <nixpkgs> {} }:
+{ pkgs ? import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/nixos-unstable.tar.gz") {} }:
 
 let
   python = pkgs.python312;
@@ -37,9 +37,20 @@ pkgs.mkShell {
     echo "Development environment loaded."
     echo "Python $(python --version) installed"
 
-    export "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${lib-path}"
+    # Set LD_LIBRARY_PATH to prioritize Nix libraries
+    export LD_LIBRARY_PATH="${lib-path}:$LD_LIBRARY_PATH"
+    
+    # Set PKG_CONFIG_PATH to help find the right OpenSSL
+    export PKG_CONFIG_PATH="${pkgs.openssl.dev}/lib/pkgconfig:$PKG_CONFIG_PATH"
+    
+    # Set OPENSSL_DIR to explicitly point to Nix OpenSSL
+    export OPENSSL_DIR="${pkgs.openssl.dev}"
+    export OPENSSL_LIB_DIR="${pkgs.openssl.out}/lib"
+    export OPENSSL_INCLUDE_DIR="${pkgs.openssl.dev}/include"
+    
     echo "Set code-insiders alias"
     alias codeinsiders="/mnt/c/Users/machajai/AppData/Local/Programs/Microsoft\ VS\ Code\ Insiders/bin/code-insiders"
+    
     # Create and activate Python virtual environment if it doesn't exist
     VENV_DIR=".venv"
     if [ ! -d "$VENV_DIR" ]; then
