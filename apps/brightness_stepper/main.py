@@ -1,12 +1,8 @@
 """Button-driven light brightness stepper for Home Assistant pyscript.
 
-Usage example:
-- Call service `pyscript.brightness_stepper_register`
-  - button_entity: "input_button.bedroom_dimmer"
-  - lights: "light.bedroom_main, light.bedroom_lamp"
-
-Each press increases brightness by `step_pct` (default 25).
-When the next step reaches 100%, all configured lights are turned off.
+Register a button and a list of lights, then each button press increases
+brightness by 25% (configurable). When the next step reaches 100%,
+all lights in the group are turned off.
 """
 
 from stubs.pyscript_builtins import event_trigger, service, state
@@ -28,7 +24,7 @@ class BrightnessStepper:
             try:
                 light_state = state.get(entity_id)
                 attrs = state.getattr(entity_id) or {}
-            except Exception:  # pragma: no cover - runtime HA/pyscript state lookup
+            except Exception:
                 continue
 
             if light_state != "on":
