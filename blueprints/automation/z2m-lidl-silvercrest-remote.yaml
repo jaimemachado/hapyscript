@@ -1,0 +1,160 @@
+blueprint:
+  name: Z2M 2.0 - Lidl Silvercrest FB20-002/HG06323 remote
+  description: 'Control any entity (lights, switches, fans, etc.) with the Lidl Silvercrest
+    remote (FB20-002/HG06323) via Zigbee2MQTT 2.x event entities.
+
+    - **On/Off buttons**: Turn the target entity/entities on or off. - **Brightness
+    Up/Down click**: Step brightness up/down by 10% (light entities only). - **Brightness
+    Up/Down hold**: Smoothly dim until released (`brightness_stop`) (light entities
+    only). - Optional override actions for holds. - Optional forced brightness when
+    turning on (light entities only).
+
+    Brightness-related actions only have an effect on entities that support the
+    `light.turn_on` brightness options; non-light entities in your target will simply
+    ignore those calls. On/off uses the generic `homeassistant.turn_on`/`turn_off`
+    services, so any domain (light, switch, fan, ...) works.
+
+    This blueprint is based on the great work by starbuck93 here: https://community.home-assistant.io/t/zigbee2mqtt-ikea-five-button-remote/255308
+    & by MrLemur: https://community.home-assistant.io/t/zigbee2mqtt-lidl-silvercrest-livarno-lux-switch-and-dimming-light-remote-control/260323
+
+    '
+  domain: automation
+  input:
+    remote:
+      name: Remote
+      description: The Z2M event entity of the remote
+      selector:
+        entity:
+          domain:
+          - event
+          reorder: false
+          multiple: false
+    target_entity:
+      name: Entity/Entities
+      description: The entity or entities to control. Any domain is supported (light,
+        switch, fan, ...); brightness features only apply to light entities.
+      selector:
+        target: {}
+    force_brightness:
+      name: Force turn on brightness
+      description: 'Force the brightness to the set level below, when the "on" button
+        on the remote is pushed and lights turn on. Only applies to light entities
+        in the target.
+
+        '
+      default: false
+      selector:
+        boolean: {}
+    brightness:
+      name: Brightness
+      description: Brightness of the light(s) when turning on
+      default: 50
+      selector:
+        number:
+          min: 0.0
+          max: 100.0
+          mode: slider
+          step: 1.0
+          unit_of_measurement: '%'
+    button_long_max_loop_repeats:
+      name: (Optional) Button long press - Maximum loop repeats
+      description: 'Safety limit to prevent endless loops if `brightness_stop` is
+        missed.
+
+        '
+      default: 100
+      selector:
+        number:
+          min: 1.0
+          max: 5000.0
+          mode: slider
+          step: 1.0
+    alt_brightness_up_hold:
+      name: Run custom action on brightness up hold
+      default: []
+      selector:
+        action: {}
+    alt_brightness_down_hold:
+      name: Run custom action on brightness down hold
+      default: []
+      selector:
+        action: {}
+  source_url: https://raw.githubusercontent.com/johannesdeboer/HA-Blueprints/refs/heads/main/zigbee2mqtt-lidl-silvercrest-livarno-lux-switch-and-dimming-light-remote-control
+mode: restart
+max_exceeded: silent
+variables:
+  force_brightness: !input force_brightness
+  brightness: !input brightness
+  button_long_max_loop_repeats: !input button_long_max_loop_repeats
+trigger:
+- platform: state
+  entity_id: !input remote
+action:
+- variables:
+    command: '{{ trigger.to_state.attributes.event_type }}'
+- choose:
+  - conditions: '{{ command == ''on'' }}'
+    sequence:
+    - choose:
+      - conditions: '{{ force_brightness }}'
+        sequence:
+        - service: light.turn_on
+          target: !input target_entity
+          data:
+            transition: 1
+            brightness_pct: !input brightness
+      default:
+      - service: homeassistant.turn_on
+        target: !input target_entity
+  - conditions: '{{ command == ''off'' }}'
+    sequence:
+    - service: homeassistant.turn_off
+      target: !input target_entity
+  - conditions: '{{ command == ''brightness_step'' and trigger.to_state.attributes.direction
+      == ''up'' }}'
+    sequence:
+    - service: light.turn_on
+      target: !input target_entity
+      data:
+        brightness_step_pct: 10
+        transition: 1
+  - conditions: '{{ command == ''brightness_step'' and trigger.to_state.attributes.direction
+      == ''down'' }}'
+    sequence:
+    - service: light.turn_on
+      target: !input target_entity
+      data:
+        brightness_step_pct: -10
+        transition: 1
+  - conditions: '{{ command == ''brightness_move_up'' }}'
+    sequence:
+    - choose:
+      - conditions: '{{ alt_brightness_up_hold != [] }}'
+        sequence: !input alt_brightness_up_hold
+      default:
+      - repeat:
+          while: '{{ repeat.index < button_long_max_loop_repeats | int }}'
+          sequence:
+          - service: light.turn_on
+            target: !input target_entity
+            data:
+              brightness_step_pct: 10
+              transition: 1
+          - delay: 1
+  - conditions: '{{ command == ''brightness_move_down'' }}'
+    sequence:
+    - choose:
+      - conditions: '{{ alt_brightness_down_hold != [] }}'
+        sequence: !input alt_brightness_down_hold
+      default:
+      - repeat:
+          while: '{{ repeat.index < button_long_max_loop_repeats | int }}'
+          sequence:
+          - service: light.turn_on
+            target: !input target_entity
+            data:
+              brightness_step_pct: -10
+              transition: 1
+          - delay: 1
+  - conditions: '{{ command == ''brightness_stop'' }}'
+    sequence: []
