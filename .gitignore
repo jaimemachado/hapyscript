@@ -137,3 +137,4 @@ Thumbs.db
 test_local/
 *.local.py
 .git-credentials
+/.claude/settings.local.json
